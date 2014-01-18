@@ -1,12 +1,16 @@
 #include "common.h"
 
-void http_extract_header(char *key, char *buf, char *copy_to) {
+/*Static function prototypes*/
+static void http_extract_header(char *key, char *buf, char *copy_to);
+static void http_parse_url(char *host, char *uri, struct http_url *url);
+
+
+static void http_extract_header(char *key, char *buf, char *copy_to) {
     size_t len = strlen(key);
     if (strncmp(key, buf, len) == 0) {
         char format[len + 10];
         sprintf(format, "%s: %s", key, "%[^" CRLF "]");
         sscanf(buf, format, copy_to);
-        /*sscanf(buf, "User-Agent: %[^\n\r]", header_data.user_agent);*/
     }
 }
 
@@ -35,19 +39,35 @@ struct http_request_data http_parse_request(const int fd) {
         http_extract_header("Accept", buf, headers->accept);
     }
 
+    http_parse_url(headers->host, headers->uri, &(data.url));
+
     return data;
 }
 
-#define PRINT_STRUCT_DATA(field) printf(#field ": %s \n", headers->field);
+static void http_parse_url(char *host, char *uri, struct http_url *url) {
+
+    sscanf(host, "%[^:]:%d", url->host, &url->port);
+    sscanf(uri, "%[^?]%s", url->path, url->query_string);
+    strcpy(url->scheme, HTTP);
+}
+
+#define PRINT_STRUCT(obj, field) printf(#field ": %s \n", obj->field);
 void http_print_request_data(struct http_request_data *data) {
 
     struct http_headers *headers;
+    struct http_url *url;
     headers = &data->headers;
+    url = &data->url;
 
-    PRINT_STRUCT_DATA(method)
-    PRINT_STRUCT_DATA(uri)
-    PRINT_STRUCT_DATA(version)
-    PRINT_STRUCT_DATA(user_agent)
-    PRINT_STRUCT_DATA(host)
-    PRINT_STRUCT_DATA(accept)
+    PRINT_STRUCT(headers, method)
+    PRINT_STRUCT(headers, uri)
+    PRINT_STRUCT(headers, version)
+    PRINT_STRUCT(headers, user_agent)
+    PRINT_STRUCT(headers, host)
+    PRINT_STRUCT(headers, accept)
+    PRINT_STRUCT(url, scheme)
+    PRINT_STRUCT(url, host)
+    printf("port: %d \n", url->port);
+    PRINT_STRUCT(url, path)
+    PRINT_STRUCT(url, query_string)
 }

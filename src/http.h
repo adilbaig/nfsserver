@@ -3,11 +3,13 @@
 #define CR '\r'
 #define LF '\n'
 #define CRLF "\r\n"
+#define HTTP "http"
+#define HTTPS "https"
 
 struct http_url {
     char scheme[MAXLINE_LEN];
-    char domain[MAXLINE_LEN];
-    unsigned short port;
+    char host[MAXLINE_LEN];
+    int port;
     char path[MAXLINE_LEN];
     char query_string[MAXLINE_LEN];
 };
@@ -28,7 +30,5 @@ struct http_request_data {
 };
 
 struct http_request_data http_parse_request(const int fd);
-
-void http_extract_header(char *key, char *buf, char *copy_to);
 
 void http_print_request_data(struct http_request_data *data);
