@@ -4,6 +4,8 @@ nfsserver:
 serve: nfsserver
 	./bin/nfsserver 9001
 
+debug-serve: nfsserver
+	gdb bin/nfsserver
 
 clean:
 	rm bin/*

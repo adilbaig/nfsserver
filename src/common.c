@@ -30,3 +30,8 @@ void Close(int fd)
     if ((rc = close(fd)) < 0)
         unix_error("Close error");
 }
+
+void log_info(char *msg) {
+
+    printf("> %s \n", msg);
+}
