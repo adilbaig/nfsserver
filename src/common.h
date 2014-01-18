@@ -1,3 +1,6 @@
+#ifndef FILE_COMMON_H
+#define FILE_COMMON
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -19,3 +22,5 @@ void Close(int fd);
 void log_info(char *msg);
 
 size_t getline_from_fd(const int fd, char *t, size_t maxlen);
+
+#endif /* !FILE_COMMON_H ! */
