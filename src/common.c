@@ -35,3 +35,26 @@ void log_info(char *msg) {
 
     printf("> %s \n", msg);
 }
+
+/**
+ * Reads line by line from a given descriptor. If a newline existed it's
+ * included in the given buffer
+ */
+size_t getline_from_fd(const int fd, char *t, size_t maxlen) {
+
+    char c, *buf;
+    int count = 0;
+    buf = t;
+    while (read(fd, &c, 1) > 0) {
+        if (c == '\0' || c == '\n' || count == maxlen)
+            break;
+        *buf = c;
+        buf++, count++;
+    }
+
+    *buf = '\n';
+    buf++;
+    *buf = '\0';
+
+    return count;
+}
