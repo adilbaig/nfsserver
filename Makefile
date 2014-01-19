@@ -1,5 +1,5 @@
 nfsserver:
-	gcc -g -Wall -o bin/nfsserver src/*.c
+	gcc -g -Wall -o bin/nfsserver src/*.c -lpthread
 
 serve: nfsserver
 	./bin/nfsserver 9001
