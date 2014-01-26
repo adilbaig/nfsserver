@@ -1,5 +1,5 @@
 #!/bin/bash
-for i in `seq 1 450`
+for i in `seq 1 4`
 do
 curl -I http://localhost:9001/&
 done

@@ -1,12 +1,12 @@
-#include "common.h"
-#include "network.h"
+#include "../lib/common.h"
+#include "../lib/threadpool.h"
 
-#include <pthread.h>
+#define NUM_THREADS 2
 
 void process_request(int fd) {
 
     struct http_request_data data = http_parse_request(fd);
-    http_print_request_data(&data);
+    /*http_print_request_data(&data);*/
 
     write(fd, "received your message\n", 25);
 }
@@ -14,10 +14,11 @@ void process_request(int fd) {
 void * thr_fn(void *arg) {
 
     int fd = (*(int *)arg);
-    printf("Request handled by %lu \n", pthread_self());
-    sleep(3);
+    printf("%lu:  Request handled. FD: %d \n", pthread_self(), fd);
     process_request(fd);
     Close(fd);
+    printf("%lu: Closed FD: %d \n", pthread_self(), fd);
+    return NULL;
 }
 
 int main(int argc, char **argv) {
@@ -37,15 +38,15 @@ int main(int argc, char **argv) {
     struct sockaddr addr;
     socklen_t addr_len = sizeof(addr);
     int accept_fd;
-    pthread_t ntid;
+    thread_pool_init(NUM_THREADS);
+
     while (1) {
         accept_fd = Accept(listen_fd, &addr, &addr_len);
-        printf("Received! \n");
-
         int tmp_fd = accept_fd;
-        pthread_create(&ntid, NULL, thr_fn, (void *)(&tmp_fd));
+        threadpool_queue_task_push(&thr_fn, (void *)(&tmp_fd));
     }
 
+    thread_pool_shutdown();
     Close(listen_fd);
     printf("%s shutting down gracefully \n", prog_name);
 

@@ -31,6 +31,14 @@ void Close(int fd)
         unix_error("Close error");
 }
 
+int Pthread_create(pthread_t *thread, const pthread_attr_t *attr, void
+        *(*start_routine) (void *), void *arg) {
+    int e = pthread_create(thread, attr, *start_routine, arg);
+    if (e != 0)
+        unix_error("Could not create thread");
+    return e;
+}
+
 void log_info(char *msg) {
 
     printf("> %s \n", msg);
