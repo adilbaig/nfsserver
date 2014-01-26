@@ -1,3 +1,4 @@
+#include <semaphore.h>
 #include "threadpool.h"
 
 pthread_cond_t queue_ready = PTHREAD_COND_INITIALIZER;
@@ -22,6 +23,7 @@ size_t num_threads = 0;
 static void init_queue();
 static struct task* threadpool_queue_task_shift();
 static void * thr_fn(void *arg);
+void print_queue();
 
 
 int thread_pool_init(size_t n_threads) {
@@ -29,6 +31,7 @@ int thread_pool_init(size_t n_threads) {
     size_t i = 0;
     num_threads = n_threads;
 
+    init_queue();
     while (i < num_threads) {
         pthread_t tid;
         Pthread_create(&tid, NULL, thr_fn, NULL);
@@ -36,7 +39,6 @@ int thread_pool_init(size_t n_threads) {
         i++;
     }
 
-    init_queue();
     return 1;
 }
 
@@ -57,6 +59,9 @@ static void * thr_fn(void *arg) {
 
     while (1) {
         struct task *tp = threadpool_queue_task_shift();
+        if (!tp)
+            continue;
+        printf("%lu: Executing %d \n", pthread_self(), *(int *)tp->arg);
 
         tp->routine(tp->arg);
         free(tp);
@@ -96,6 +101,7 @@ void threadpool_queue_task_push(void *(*routine)(void *), void *arg) {
 
     pthread_mutex_unlock(&queue_lock);
     pthread_cond_signal(&queue_ready);
+    printf("Pushed fd: %d \n", (*(int *)arg));
 }
 
 static struct task* threadpool_queue_task_shift() {
@@ -103,7 +109,10 @@ static struct task* threadpool_queue_task_shift() {
     pthread_mutex_lock(&queue_lock);
     if (!qp->headp && !qp->tailp) {
         pthread_cond_wait(&queue_ready, &queue_lock);
-        /*return NULL;*/
+        if (!qp->headp && !qp->tailp) {
+            pthread_mutex_unlock(&queue_lock);
+            return NULL;
+        }
     }
 
     struct task *tp = qp->headp;
@@ -115,4 +124,13 @@ static struct task* threadpool_queue_task_shift() {
 
     pthread_mutex_unlock(&queue_lock);
     return tp;
+}
+
+void print_queue() {
+
+    struct task *tp = qp->headp;
+    while(tp) {
+        printf("q> fd: %d \n", (*(int *)tp->arg));
+        tp = tp->nextp;
+    }
 }

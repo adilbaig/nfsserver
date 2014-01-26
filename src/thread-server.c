@@ -7,15 +7,15 @@ void process_request(int fd) {
 
     struct http_request_data data = http_parse_request(fd);
     /*http_print_request_data(&data);*/
-
-    write(fd, "received your message\n", 25);
 }
 
 void * thr_fn(void *arg) {
 
     int fd = (*(int *)arg);
+    free(arg);
     printf("%lu:  Request handled. FD: %d \n", pthread_self(), fd);
     process_request(fd);
+    write(fd, "Received your message\n", 25);
     Close(fd);
     printf("%lu: Closed FD: %d \n", pthread_self(), fd);
     return NULL;
@@ -37,13 +37,15 @@ int main(int argc, char **argv) {
 
     struct sockaddr addr;
     socklen_t addr_len = sizeof(addr);
-    int accept_fd;
+    int *accept_fd;
     thread_pool_init(NUM_THREADS);
+    static int count = 0;
 
     while (1) {
-        accept_fd = Accept(listen_fd, &addr, &addr_len);
-        int tmp_fd = accept_fd;
-        threadpool_queue_task_push(&thr_fn, (void *)(&tmp_fd));
+        accept_fd = malloc(sizeof(int));
+        *accept_fd = Accept(listen_fd, &addr, &addr_len);
+        threadpool_queue_task_push(&thr_fn, (void *)(accept_fd));
+        printf("Request COUNT: %d \n", ++count);
     }
 
     thread_pool_shutdown();
