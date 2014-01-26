@@ -1,30 +1,15 @@
-#include <semaphore.h>
 #include "threadpool.h"
 
-pthread_cond_t queue_ready = PTHREAD_COND_INITIALIZER;
-pthread_mutex_t queue_lock = PTHREAD_MUTEX_INITIALIZER;
-
-struct task {
-    struct task *nextp;
-    void *(*routine)(void *);
-    void *arg;
-};
-
-struct queue {
-    struct task *headp;
-    struct task *tailp;
-};
-
+static pthread_cond_t queue_ready = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t queue_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static pthread_t thread_ids[THREADPOOL_MAX_THREADS_NUM];
-static struct queue *qp;
+static struct thread_pool_queue *qp;
 size_t num_threads = 0;
 
 static void init_queue();
-static struct task* threadpool_queue_task_shift();
+static struct thread_pool_task* threadpool_queue_task_shift();
 static void * thr_fn(void *arg);
-void print_queue();
-
 
 int thread_pool_init(size_t n_threads) {
 
@@ -58,7 +43,7 @@ static void * thr_fn(void *arg) {
     printf("Created thread: %lu \n", pthread_self());
 
     while (1) {
-        struct task *tp = threadpool_queue_task_shift();
+        struct thread_pool_task *tp = threadpool_queue_task_shift();
         if (!tp)
             continue;
         printf("%lu: Executing %d \n", pthread_self(), *(int *)tp->arg);
@@ -72,7 +57,7 @@ static void * thr_fn(void *arg) {
 
 static void init_queue() {
 
-    qp = (struct queue *) malloc(sizeof(struct queue));
+    qp = (struct thread_pool_queue *) malloc(sizeof(struct thread_pool_queue));
     if (qp == NULL) {
         unix_error("Could not allocate memory for queue \n");
     }
@@ -84,7 +69,7 @@ void threadpool_queue_task_push(void *(*routine)(void *), void *arg) {
 
     pthread_mutex_lock(&queue_lock);
 
-    struct task *tp = (struct task *)malloc(sizeof(struct task));
+    struct thread_pool_task *tp = malloc(sizeof(struct thread_pool_task));
     if (!tp) {
         unix_error("Failed to allocate space for an task");
     }
@@ -104,7 +89,7 @@ void threadpool_queue_task_push(void *(*routine)(void *), void *arg) {
     printf("Pushed fd: %d \n", (*(int *)arg));
 }
 
-static struct task* threadpool_queue_task_shift() {
+static struct thread_pool_task* threadpool_queue_task_shift() {
 
     pthread_mutex_lock(&queue_lock);
     if (!qp->headp && !qp->tailp) {
@@ -115,7 +100,7 @@ static struct task* threadpool_queue_task_shift() {
         }
     }
 
-    struct task *tp = qp->headp;
+    struct thread_pool_task *tp = qp->headp;
     qp->headp = tp->nextp;
 
     if (!qp->headp) {
@@ -124,13 +109,4 @@ static struct task* threadpool_queue_task_shift() {
 
     pthread_mutex_unlock(&queue_lock);
     return tp;
-}
-
-void print_queue() {
-
-    struct task *tp = qp->headp;
-    while(tp) {
-        printf("q> fd: %d \n", (*(int *)tp->arg));
-        tp = tp->nextp;
-    }
 }

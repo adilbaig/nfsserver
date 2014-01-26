@@ -6,7 +6,7 @@
 void process_request(int fd) {
 
     struct http_request_data data = http_parse_request(fd);
-    /*http_print_request_data(&data);*/
+    http_print_request_data(&data);
 }
 
 void * thr_fn(void *arg) {
