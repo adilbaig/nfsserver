@@ -1,5 +1,6 @@
 #include "../lib/common.h"
 #include "../lib/threadpool.h"
+#include "../lib/response.h"
 
 #define NUM_THREADS 2
 
@@ -7,17 +8,30 @@ void process_request(int fd) {
 
     struct http_request_data data = http_parse_request(fd);
     http_print_request_data(&data);
+
+    char path[1024] = "data/";
+    if (strcmp(data.url.path, "/") == 0) {
+        strcat(path, "index.html");
+    } else {
+        strcat(path, data.url.path);
+    }
+
+    struct response *res = response_create();
+    response_populate(path, res);
+    write(fd, (char *)res->content, res->length);
+    write(fd, "\n", 1);
+    response_destroy(res);
 }
 
 void * thr_fn(void *arg) {
 
     int fd = (*(int *)arg);
     free(arg);
-    printf("%lu:  Request handled. FD: %d \n", pthread_self(), fd);
+    printf("%lu:  Request handled. FD: %d \n", (unsigned long)pthread_self(), fd);
     process_request(fd);
     write(fd, "Received your message\n", 25);
     Close(fd);
-    printf("%lu: Closed FD: %d \n", pthread_self(), fd);
+    printf("%lu: Closed FD: %d \n", (unsigned long)pthread_self(), fd);
     return NULL;
 }
 

@@ -40,13 +40,13 @@ void thread_pool_shutdown() {
 
 static void * thr_fn(void *arg) {
 
-    printf("Created thread: %lu \n", pthread_self());
+    printf("Created thread: %lu \n", (unsigned long)pthread_self());
 
     while (1) {
         struct thread_pool_task *tp = threadpool_queue_task_shift();
         if (!tp)
             continue;
-        printf("%lu: Executing %d \n", pthread_self(), *(int *)tp->arg);
+        printf("%lu: Executing %d \n", (unsigned long)pthread_self(), *(int *)tp->arg);
 
         tp->routine(tp->arg);
         free(tp);
