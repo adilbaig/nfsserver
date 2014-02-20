@@ -11,6 +11,14 @@ static void init_queue();
 static struct thread_pool_task* threadpool_queue_task_shift();
 static void * thr_fn(void *arg);
 
+int Pthread_create(pthread_t *thread, const pthread_attr_t *attr, void
+        *(*start_routine) (void *), void *arg) {
+    int e = pthread_create(thread, attr, *start_routine, arg);
+    if (e != 0)
+        unix_error("Could not create thread");
+    return e;
+}
+
 int thread_pool_init(size_t n_threads) {
 
     size_t i = 0;
