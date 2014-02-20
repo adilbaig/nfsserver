@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "response.h"
 
 struct response *response_create() {
@@ -15,7 +16,7 @@ void response_populate(char *path, struct response *res) {
     // Handle file opening errors
     int fd = fileno(fp);
     struct stat st;
-    int r = fstat(fd, &st);
+    fstat(fd, &st);
     // Handle errors returned by fstat
     res->type = HTML;
     res->length = st.st_size;
