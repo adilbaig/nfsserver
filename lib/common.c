@@ -1,8 +1,7 @@
 #include "common.h"
 
-void unix_error(char *msg) /* unix-style error */
+void unix_error(char *msg)
 {
-    /*fprintf(stderr, "%s: %s\n", msg, strerror(errno));*/
     perror(msg);
     exit(0);
 }
@@ -37,11 +36,6 @@ int Pthread_create(pthread_t *thread, const pthread_attr_t *attr, void
     if (e != 0)
         unix_error("Could not create thread");
     return e;
-}
-
-void log_info(char *msg) {
-
-    printf("> %s \n", msg);
 }
 
 /**
