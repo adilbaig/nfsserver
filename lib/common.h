@@ -20,9 +20,6 @@ int Accept(int s, struct sockaddr *addr, socklen_t *addrlen);
 
 void Close(int fd);
 
-int Pthread_create(pthread_t *thread, const pthread_attr_t *attr, void
-        *(*start_routine) (void *), void *arg);
-
 void log_info(char *msg);
 
 size_t getline_from_fd(const int fd, char *t, size_t maxlen);

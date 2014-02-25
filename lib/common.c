@@ -1,4 +1,5 @@
 #include "common.h"
+#include "network.h"
 
 void unix_error(char *msg)
 {

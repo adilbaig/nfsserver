@@ -11,6 +11,34 @@ void process_request(int fd) {
     write(fd, "received your message\n", 25);
 }
 
+pid_t fork_child(int listen_fd)
+{
+    struct sockaddr addr;
+    socklen_t addr_len = sizeof(addr);
+
+    pid_t child_pid = fork();
+    if(child_pid < 0) {
+        perror("fork failure!");
+        exit(1);
+    }
+
+    if(child_pid == 0) {
+
+        printf("Child started (PID %d)\n", getpid());
+
+        while (1) {
+
+            int accept_fd = Accept(listen_fd, &addr, &addr_len);
+            printf("Received on (PID %d)\n", getpid());
+
+            process_request(accept_fd);
+            close(accept_fd);
+        }
+    } else {
+        return child_pid;
+    }
+}
+
 int main(int argc, char **argv) {
 
     if (argc < 3) {
@@ -24,31 +52,12 @@ int main(int argc, char **argv) {
 
     int processes = atoi(argv[2]);
 
-    struct sockaddr addr;
-    socklen_t addr_len = sizeof(addr);
-
     //Now fork from here. Each process will 'accept'.
-    // This part needs to be dynamically monitor processes, and re-launch processes if killed.
-    int c=0;
+    int c = 0;
     int live_children = 0;
     while(c++ < processes) {
-        pid_t child_pid = fork();
-        if(child_pid < 0) {
-            perror("fork failure!");
-            exit(1);
-        }
-
-        if(child_pid == 0) {
-            while (1) {
-                printf("Listening %d ..\n", c);
-
-                int accept_fd = Accept(listen_fd, &addr, &addr_len);
-                printf("Received on %d (PID %d)\n", c, getpid());
-
-                process_request(accept_fd);
-                close(accept_fd);
-            }
-        } else {
+        pid_t child_pid = fork_child(listen_fd);
+        if(child_pid != 0) {
             //Parent is counting children forked
             live_children++;
         }
@@ -63,8 +72,21 @@ int main(int argc, char **argv) {
         if(WIFEXITED(status))
             printf("Normal termination with exit status=%d\n", WEXITSTATUS(status));
 
-        if(WIFSIGNALED(status))
-            printf("Killed by signal=%d\n", WTERMSIG(status));
+        //Dynamically check if a child was manually killed via SIGABRT. Restart if so.
+        if(WIFSIGNALED(status)) {
+            int sig = WTERMSIG(status);
+            printf("Killed by signal=%d.\n", sig);
+
+            //Restart the child process if killed w SIGABRT
+            if(sig == SIGABRT) {
+                printf("Child was aborted. Restarting process.. ");
+
+                pid_t child_pid = fork_child(listen_fd);
+                if(child_pid != 0) {
+                    live_children++;
+                }
+            }
+        }
 
         if(WIFSTOPPED(status))
             printf("Stopped by signal=%d\n", WSTOPSIG(status));
