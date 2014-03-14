@@ -7,6 +7,9 @@ basic-server:
 prefork-server:
 	gcc -g -Wall -std=c99 -o bin/prefork-server src/prefork-server.c lib/network.c lib/common.c lib/response.c lib/http.c
 
+evented-server:
+	gcc -g -Wall -std=c99 -o bin/evented-server src/evented-server.c lib/common.c lib/network.c
+
 serve: nfsserver
 	./bin/nfsserver 9001
 
