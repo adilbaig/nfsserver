@@ -2,7 +2,7 @@
 #include "../lib/threadpool.h"
 #include "../lib/response.h"
 
-#define NUM_THREADS 2
+#define NUM_WORKERS 2
 
 void process_request(int fd) {
 
@@ -39,20 +39,27 @@ int main(int argc, char **argv) {
 
     char *prog_name;
     prog_name = argv[0];
+    int num_workers = NUM_WORKERS;
 
     if (argc < 2) {
         fprintf(stderr, "Usage: nfsserver <listening port> \n");
         return EXIT_FAILURE;
     }
-
     int port = atoi(argv[1]);
+
+    if (argc == 3) {
+        num_workers = atoi(argv[2]);
+    }
+
     int listen_fd = Open_listenfd(port);
-    printf("%s listening INTENTLY on %d \n", prog_name, port);
+
+    fprintf(stdin, "%s listening intently on %d with %d workers", prog_name,
+            port, num_workers);
 
     struct sockaddr addr;
     socklen_t addr_len = sizeof(addr);
     int *accept_fd;
-    thread_pool_init(NUM_THREADS);
+    thread_pool_init(num_workers);
     static int count = 0;
 
     while (1) {

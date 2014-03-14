@@ -1,9 +1,8 @@
 #include "common.h"
 #include "network.h"
 
-void unix_error(char *msg) /* unix-style error */
+void unix_error(char *msg)
 {
-    /*fprintf(stderr, "%s: %s\n", msg, strerror(errno));*/
     perror(msg);
     exit(0);
 }
@@ -32,9 +31,12 @@ void Close(int fd)
         unix_error("Close error");
 }
 
-void log_info(char *msg) {
-
-    printf("> %s \n", msg);
+int Pthread_create(pthread_t *thread, const pthread_attr_t *attr, void
+        *(*start_routine) (void *), void *arg) {
+    int e = pthread_create(thread, attr, *start_routine, arg);
+    if (e != 0)
+        unix_error("Could not create thread");
+    return e;
 }
 
 /**
