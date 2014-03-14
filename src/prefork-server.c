@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
 
     int port = atoi(argv[1]);
     int listen_fd = Open_listenfd(port);
-    printf("%s listening INTENTLY on %d \n", argv[0], port);
+    printf("%s listening on %d \n", argv[0], port);
 
     int processes = atoi(argv[2]);
 
@@ -72,19 +72,23 @@ int main(int argc, char **argv) {
         if(WIFEXITED(status))
             printf("Normal termination with exit status=%d\n", WEXITSTATUS(status));
 
-        //Dynamically check if a child was manually killed via SIGABRT. Restart if so.
+        //Check if terminated by signal
         if(WIFSIGNALED(status)) {
             int sig = WTERMSIG(status);
             printf("Killed by signal=%d.\n", sig);
 
-            //Restart the child process if killed w SIGABRT
-            if(sig == SIGABRT) {
-                printf("Child was aborted. Restarting process.. ");
+            //Restart child process, unless killed by SIGUSR1
+            if(sig != SIGUSR1) {
+                printf("Child was killed. Respawning .. ");
 
                 pid_t child_pid = fork_child(listen_fd);
                 if(child_pid != 0) {
                     live_children++;
                 }
+
+                printf("Done\n");
+            } else {
+                printf("Child was killed by SIGUSR1. Will not respawn.\n");
             }
         }
 
